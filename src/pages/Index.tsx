@@ -1,89 +1,81 @@
-import React, { useState } from 'react';
-import { Navigation } from '@/components/ui/navigation';
-import { HeroSection } from '@/components/eco/hero-section';
-import { CommunityProgress } from '@/components/eco/community-progress';
-import { PickupRequestForm, PickupRequest } from '@/components/eco/pickup-request-form';
-import { SortingGuide } from '@/components/eco/sorting-guide';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { Navigation } from "@/components/ui/navigation";
+import { HeroSection } from "@/components/eco/hero-section";
+import { CommunityProgress } from "@/components/eco/community-progress";
+import { PickupRequestForm, PickupRequest } from "@/components/eco/pickup-request-form";
+import { SortingGuide } from "@/components/eco/sorting-guide";
+import { LoginModal } from "@/components/ui/login-modal";
+import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/firebase/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 const Index = () => {
   const { toast } = useToast();
-  const [currentUser, setCurrentUser] = useState<{
-    name: string;
-    role: 'resident' | 'collector';
-    ecoPoints: number;
-  } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: "resident" | "collector"; ecoPoints: number; } | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Mock user for demo - in real app this would come from authentication
-  const handleAuth = () => {
-    if (!currentUser) {
-      setCurrentUser({
-        name: "Sarah Wanjiku",
-        role: "resident",
-        ecoPoints: 127
-      });
-      toast({
-        title: "Welcome to EcoKili!",
-        description: "You're now part of the waste-to-wonder movement.",
-      });
-    }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser({
+          name: user.displayName || "Anonymous",
+          role: "resident",
+          ecoPoints: 0,
+        });
+      } else {
+        setCurrentUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    toast({ title: "Logged out" });
   };
 
   const handlePickupRequest = (request: PickupRequest) => {
-    // Mock submission - in real app this would send to backend
-    console.log('Pickup request:', request);
-    
-    const pointsEarned = request.wasteTypes.length * 10; // Simplified calculation
-    
+    const pointsEarned = request.wasteTypes.length * 10;
     toast({
       title: "Pickup Scheduled!",
-      description: `Your pickup is confirmed. You'll earn ${pointsEarned} EcoPoints when completed.`,
+      description: `You'll earn ${pointsEarned} EcoPoints when completed.`,
     });
-
-    // Update user points in real implementation
     if (currentUser) {
       setCurrentUser({
         ...currentUser,
-        ecoPoints: currentUser.ecoPoints + pointsEarned
+        ecoPoints: currentUser.ecoPoints + pointsEarned,
       });
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <Navigation currentUser={currentUser} onAuthClick={handleAuth} />
-
-      {/* Hero Section */}
-      <HeroSection onGetStarted={handleAuth} />
-
-      {/* Community Progress Dashboard */}
-      <CommunityProgress
-        currentPoints={15750}
-        targetPoints={20000}
-        tilesInstalled={3}
-        activeMembers={247}
+      <Navigation
+        currentUser={currentUser}
+        onAuthClick={currentUser ? handleLogout : () => setShowLoginModal(true)}
       />
 
-      {/* Pickup Request Form */}
-      {currentUser && (
-        <PickupRequestForm onSubmit={handlePickupRequest} />
-      )}
+      <HeroSection onGetStarted={() => setShowLoginModal(true)} />
 
-      {/* Sorting Guide */}
+      <CommunityProgress currentPoints={15750} targetPoints={20000} tilesInstalled={3} activeMembers={247} />
+    
+      {currentUser && <PickupRequestForm onSubmit={handlePickupRequest} />}
+
       <SortingGuide />
 
-      {/* Footer */}
-      <footer className="bg-eco-primary text-white py-12">
+      <LoginModal open={showLoginModal} onClose={() => setShowLoginModal(false)} />
+
+     <footer className="bg-eco-primary text-white py-12">
         <div className="container mx-auto px-4 text-center">
           <div className="mb-6">
             <h3 className="text-2xl font-bold mb-2">Join the Movement</h3>
             <p className="text-eco-light max-w-2xl mx-auto">
-              Together, we're transforming Kilimani one pickup at a time. 
-              Every sorted waste item brings us closer to a cleaner, more beautiful community.
+              Together, we're transforming Kilimani one pickup at a time. Every
+              sorted waste item brings us closer to a cleaner, more beautiful
+              community.
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-6 text-sm">
             <div>
               <h4 className="font-semibold mb-2">Contact</h4>
@@ -101,10 +93,10 @@ const Index = () => {
               <p className="text-eco-light">Environmental Goals</p>
             </div>
           </div>
-          
+
           <div className="mt-8 pt-6 border-t border-eco-light/20">
             <p className="text-eco-light text-sm">
-              © 2024 EcoKili. Building a sustainable Kilimani together.
+              © 2025 EcoKili. Building a sustainable Kilimani together.
             </p>
           </div>
         </div>
