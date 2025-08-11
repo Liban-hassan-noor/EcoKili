@@ -72,7 +72,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
             <Button
               size="lg"
               onClick={() => {
-                onGetStarted(); // keep your modal logic
+                //onGetStarted(); // keep your modal logic
                 scrollToSection("pickup-request");
               }}
               className="bg-eco-primary hover:bg-eco-primary/90 text-white px-8 py-3 text-lg eco-glow group"
